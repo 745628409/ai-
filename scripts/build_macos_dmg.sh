@@ -59,11 +59,17 @@ fi
 
 "$PY_BIN" -m venv "$ROOT_DIR/.venv"
 source "$ROOT_DIR/.venv/bin/activate"
-python -m pip install --upgrade pip setuptools wheel
+
+pip_safe() {
+  PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 python -m pip "$@"
+}
+
+pip_safe install --upgrade pip setuptools wheel
 
 install_with_binary_wheels() {
   local req_path="$1"
-  PIP_ONLY_BINARY=:all: python -m pip install --prefer-binary -r "$req_path" pyinstaller
+  PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 PIP_ONLY_BINARY=:all: \
+    python -m pip install --prefer-binary -r "$req_path" pyinstaller
 }
 
 install_opencv_binary() {
@@ -76,7 +82,8 @@ install_opencv_binary() {
   )
   for pkg in "${candidates[@]}"; do
     echo "[INFO] 尝试安装 OpenCV 二进制包: $pkg"
-    if PIP_ONLY_BINARY=:all: python -m pip install --prefer-binary "$pkg"; then
+    if PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 PIP_ONLY_BINARY=:all: \
+      python -m pip install --prefer-binary "$pkg"; then
       return 0
     fi
   done
@@ -101,6 +108,7 @@ if ! install_stack "$REQ_FILE"; then
   1) 当前 venv 的 Python 版本或 CPU 架构没有可用 wheel。
   2) pip 版本过旧或网络镜像缺少对应 wheel。
   3) 当前镜像源缺少 macOS 对应的 opencv-python wheel。
+  4) 系统 pip 配置启用了 hash 校验或私有约束，导致第三方包被拒绝。
 
 建议：
   - 使用 Python 3.10（Intel x86_64）后重试；

@@ -80,3 +80,10 @@ PIP_ONLY_BINARY=:all: pip install --prefer-binary opencv-python==4.6.0.66
 ```bash
 PIP_INDEX_URL=https://pypi.org/simple bash scripts/build_macos_dmg.sh
 ```
+
+如果出现 `THESE PACKAGES DO NOT MATCH THE HASHES FROM THE REQUIREMENTS FILE`，通常是系统级 `pip.conf` 开启了 `require-hashes` 或私有约束。  
+新脚本已默认忽略系统 pip 配置；你也可以手工验证：
+
+```bash
+PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 pip install --upgrade pip
+```
