@@ -66,23 +66,46 @@ install_with_binary_wheels() {
   PIP_ONLY_BINARY=:all: python -m pip install --prefer-binary -r "$req_path" pyinstaller
 }
 
-if ! install_with_binary_wheels "$REQ_FILE"; then
+install_opencv_binary() {
+  local -a candidates=(
+    "opencv-python==4.6.0.66"
+    "opencv-python==4.5.5.64"
+    "opencv-python==4.5.3.56"
+    "opencv-python==4.1.2.30"
+  )
+  for pkg in "${candidates[@]}"; do
+    echo "[INFO] 尝试安装 OpenCV 二进制包: $pkg"
+    if PIP_ONLY_BINARY=:all: python -m pip install --prefer-binary "$pkg"; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+install_stack() {
+  local req_path="$1"
+  install_with_binary_wheels "$req_path" && install_opencv_binary
+}
+
+if ! install_stack "$REQ_FILE"; then
   echo "[WARN] 主依赖安装失败，尝试 macOS 兼容降级依赖..."
   if [[ ! -f "$LEGACY_REQ_FILE" ]]; then
     echo "[ERROR] 未找到降级依赖文件: $LEGACY_REQ_FILE"
     exit 1
   fi
-  if ! install_with_binary_wheels "$LEGACY_REQ_FILE"; then
+  if ! install_stack "$LEGACY_REQ_FILE"; then
     cat <<'EOF'
 [ERROR] 仍未能安装二进制依赖（已避免源码编译）。
 可能原因：
   1) 当前 venv 的 Python 版本或 CPU 架构没有可用 wheel。
   2) pip 版本过旧或网络镜像缺少对应 wheel。
+  3) 当前镜像源缺少 macOS 对应的 opencv-python wheel。
 
 建议：
   - 使用 Python 3.10（Intel x86_64）后重试；
   - 删除 .venv 后重试（避免沿用旧 Python 版本）；
-  - 或切换官方 PyPI 源重试；
+  - 临时切换官方 PyPI 源后重试：
+      PIP_INDEX_URL=https://pypi.org/simple bash scripts/build_macos_dmg.sh
   - 若日志出现 nasm / CMake，说明触发了源码构建，本脚本已阻止该路径。
 EOF
     exit 1
