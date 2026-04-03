@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小说转画面与视频（小白版）</title>
+  <style>
+    body { font-family: Arial, "Microsoft YaHei", sans-serif; margin: 0; background:#0f172a; color:#e2e8f0; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .card { background: #111827; border:1px solid #334155; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+    textarea,input,select,button { width: 100%; box-sizing: border-box; border-radius: 8px; border:1px solid #475569; background:#020617; color:#e2e8f0; padding:10px; margin-top:8px; }
+    button { cursor:pointer; background:#4f46e5; border:0; }
+    .grid { display:grid; gap:10px; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); }
+    img,video { width:100%; border-radius:10px; }
+    .muted { color:#94a3b8; font-size:12px; }
+    pre { white-space:pre-wrap; background:#020617; border:1px solid #334155; border-radius:8px; padding:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>小说转画面与视频（小白一键版）</h1>
+    <p class="muted">只要输入小说段落，然后点按钮即可。</p>
+
+    <div class="card">
+      <label>1）输入小说内容</label>
+      <textarea id="text" rows="4">夜晚的走廊里，一个女人缓慢走向尽头的门，灯光闪烁，她回头看了一眼</textarea>
+      <div class="grid">
+        <div>
+          <label>风格</label>
+          <select id="style">
+            <option>写实</option><option selected>电影感</option><option>插画</option><option>奇幻</option><option>国风</option><option>悬疑</option><option>赛博朋克</option>
+          </select>
+        </div>
+        <div>
+          <label>比例</label>
+          <select id="ratio"><option>16:9</option><option>9:16</option><option>1:1</option><option>21:9</option></select>
+        </div>
+      </div>
+      <div class="grid" style="margin-top:10px;">
+        <button onclick="analyzeStory()">解析小说</button>
+        <button onclick="textToImage()">文生图</button>
+        <button onclick="textToVideo()">文生视频</button>
+        <button onclick="imageToVideo()">图生视频（基于第一张图）</button>
+        <button onclick="keyframeToVideo()">关键帧补全（基于前三张图）</button>
+      </div>
+      <p id="status" class="muted"></p>
+    </div>
+
+    <div class="card">
+      <h3>2）小说理解结果</h3>
+      <pre id="analysis">先点击“解析小说”</pre>
+    </div>
+
+    <div class="card">
+      <h3>3）生成图片</h3>
+      <div id="images" class="grid"></div>
+    </div>
+
+    <div class="card">
+      <h3>4）生成视频</h3>
+      <div id="videos" class="grid"></div>
+    </div>
+  </div>
+
+<script>
+const api = {
+  analyze: (text) => fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}).then(r=>r.json()),
+  textToImage: (payload) => fetch('/api/generate/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()),
+  textToVideo: (payload) => fetch('/api/generate/video/text',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()),
+  imageToVideo: (payload) => fetch('/api/generate/video/image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()),
+  keyframeToVideo: (payload) => fetch('/api/generate/video/keyframes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()),
+};
+
+let currentImages = [];
+
+function basePayload(){
+  return {
+    text: document.getElementById('text').value,
+    style: document.getElementById('style').value,
+    aspect_ratio: document.getElementById('ratio').value
+  }
+}
+
+function setStatus(msg){ document.getElementById('status').textContent = msg; }
+
+async function analyzeStory(){
+  setStatus('解析中...');
+  const text = document.getElementById('text').value;
+  const res = await api.analyze(text);
+  document.getElementById('analysis').textContent = JSON.stringify(res.data,null,2);
+  setStatus('解析完成');
+}
+
+async function textToImage(){
+  setStatus('文生图中...');
+  const res = await api.textToImage({...basePayload(), candidate_count: 3, character_ids: []});
+  currentImages = res.data.urls || [];
+  renderImages(currentImages);
+  document.getElementById('analysis').textContent = JSON.stringify(res.data.analysis,null,2);
+  setStatus('文生图完成');
+}
+
+async function textToVideo(){
+  setStatus('文生视频中...');
+  const res = await api.textToVideo({...basePayload(), duration_seconds: 6, character_ids: []});
+  prependVideo(res.data.video_url);
+  setStatus('文生视频完成');
+}
+
+async function imageToVideo(){
+  if(!currentImages[0]){ alert('请先生成图片'); return; }
+  setStatus('图生视频中...');
+  const res = await api.imageToVideo({ image_url: currentImages[0], action_text:'角色慢慢抬头，风吹动头发，镜头向前推进', style: document.getElementById('style').value, duration_seconds: 6 });
+  prependVideo(res.data.video_url);
+  setStatus('图生视频完成');
+}
+
+async function keyframeToVideo(){
+  if(currentImages.length < 3){ alert('请先生成至少3张图片'); return; }
+  setStatus('关键帧补全中...');
+  const res = await api.keyframeToVideo({ start_image_url: currentImages[0], middle_image_url: currentImages[1], end_image_url: currentImages[2], story_text: document.getElementById('text').value, style: document.getElementById('style').value, duration_seconds: 8 });
+  prependVideo(res.data.video_url);
+  setStatus('关键帧补全完成');
+}
+
+function renderImages(urls){
+  const wrap = document.getElementById('images');
+  wrap.innerHTML = '';
+  urls.forEach((u) => {
+    const img = document.createElement('img');
+    img.src = u;
+    wrap.appendChild(img);
+  });
+}
+
+function prependVideo(url){
+  const wrap = document.getElementById('videos');
+  const video = document.createElement('video');
+  video.controls = true;
+  video.src = url;
+  wrap.prepend(video);
+}
+</script>
+</body>
+</html>
