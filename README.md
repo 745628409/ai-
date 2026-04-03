@@ -25,6 +25,23 @@ python run.py
 
 ---
 
+
+## macOS 10.14 打包版（你要的即用版）
+
+### 先快速用（不打包）
+直接双击：`start_mac.command`
+
+### 生成可双击 `.app`
+在终端执行：
+```bash
+./packaging/macos/build_mac_app.sh
+```
+生成后双击：`dist/双击运行.command`
+
+详细说明见：`packaging/macos/README.md`
+
+---
+
 ## 二、你能做什么
 
 - 文本生成静态画面（多候选、风格、比例）
