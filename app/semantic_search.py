@@ -41,18 +41,17 @@ EVENT_CANDIDATES = {
 
 class SemanticSearcher:
     def __init__(self, model_name: str = "openai/clip-vit-base-patch32") -> None:
-        self.processor = CLIPProcessor.from_pretrained(model_name)
-        self.model = CLIPModel.from_pretrained(model_name)
+        self.model_name = model_name
+        self.processor = None
+        self.model = None
 
         self.shot_embeddings: np.ndarray | None = None
         self.shot_face_embeddings: np.ndarray | None = None
         self.shots: List[ShotSegment] = []
 
-        self.effect_label_embeddings = self._encode_text(EFFECT_CANDIDATES)
-        self.scene_label_embeddings = self._encode_text(SCENE_CANDIDATES)
-        self.event_label_embeddings = {
-            key: self._encode_text(prompts) for key, prompts in EVENT_CANDIDATES.items()
-        }
+        self.effect_label_embeddings: np.ndarray | None = None
+        self.scene_label_embeddings: np.ndarray | None = None
+        self.event_label_embeddings: dict[str, np.ndarray] = {}
 
         self.actor_db: Dict[str, np.ndarray] = {}
         self.eye_open_scores: np.ndarray | None = None
@@ -63,7 +62,19 @@ class SemanticSearcher:
         )
         self.eye_detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
 
+    def _ensure_model_loaded(self) -> None:
+        if self.processor is None or self.model is None:
+            self.processor = CLIPProcessor.from_pretrained(self.model_name)
+            self.model = CLIPModel.from_pretrained(self.model_name)
+        if self.effect_label_embeddings is None or self.scene_label_embeddings is None or not self.event_label_embeddings:
+            self.effect_label_embeddings = self._encode_text(EFFECT_CANDIDATES)
+            self.scene_label_embeddings = self._encode_text(SCENE_CANDIDATES)
+            self.event_label_embeddings = {
+                key: self._encode_text(prompts) for key, prompts in EVENT_CANDIDATES.items()
+            }
+
     def load_actor_library(self, actor_root: str = "data/actors") -> int:
+        self._ensure_model_loaded()
         root = Path(actor_root)
         self.actor_db.clear()
         if not root.exists():
@@ -88,6 +99,7 @@ class SemanticSearcher:
         return len(self.actor_db)
 
     def index_shots(self, shots: List[ShotSegment]) -> None:
+        self._ensure_model_loaded()
         self.shots = shots
         shot_vectors: list[np.ndarray] = []
         face_vectors: list[np.ndarray] = []
@@ -130,6 +142,7 @@ class SemanticSearcher:
         self.event_scores = {k: np.array(v, dtype=np.float32) for k, v in event_collect.items()}
 
     def search(self, query: str, top_k: int = 20) -> List[SearchResult]:
+        self._ensure_model_loaded()
         if self.shot_embeddings is None or not self.shots:
             return []
 
@@ -257,11 +270,13 @@ class SemanticSearcher:
         return scene, rest
 
     def _encode_images(self, images: list[Image.Image]) -> np.ndarray:
+        self._ensure_model_loaded()
         inputs = self.processor(images=images, return_tensors="pt", padding=True)
         image_features = self.model.get_image_features(**inputs).detach().cpu().numpy()
         return self._normalize(image_features)
 
     def _encode_text(self, texts: list[str]) -> np.ndarray:
+        self._ensure_model_loaded()
         text_inputs = self.processor(text=texts, return_tensors="pt", padding=True)
         text_features = self.model.get_text_features(**text_inputs).detach().cpu().numpy()
         return self._normalize(text_features)

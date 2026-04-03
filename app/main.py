@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 import threading
+import traceback
 from pathlib import Path
 from tkinter import BOTH, END, LEFT, RIGHT, Button, Entry, Frame, Label, Scrollbar, Text, Tk, filedialog, messagebox
 
 from PIL import Image, ImageTk
-
-from semantic_search import SemanticSearcher
-from shot_indexer import ShotIndexer
-
 
 class App:
     def __init__(self, root: Tk) -> None:
@@ -16,8 +13,8 @@ class App:
         self.root.title("视频镜头智能检索 (增强版)")
         self.root.geometry("1100x760")
 
-        self.indexer = ShotIndexer()
-        self.searcher = SemanticSearcher()
+        self.indexer = None
+        self.searcher = None
         self.shots = []
         self.thumb_cache = []
 
@@ -49,8 +46,32 @@ class App:
         scrollbar = Scrollbar(body, command=self.result_box.yview)
         scrollbar.pack(side=RIGHT, fill="y")
         self.result_box.config(yscrollcommand=scrollbar.set)
+        self._init_backends()
+
+    def _init_backends(self) -> None:
+        try:
+            from semantic_search import SemanticSearcher
+            from shot_indexer import ShotIndexer
+        except Exception:
+            err = traceback.format_exc()
+            _write_launch_log(err)
+            self.status.config(text="初始化失败：依赖加载异常，请查看日志。")
+            messagebox.showerror("启动失败", "依赖加载失败，请查看 ~/Library/Logs/ShotSearch/launch.log")
+            return
+
+        try:
+            self.indexer = ShotIndexer()
+            self.searcher = SemanticSearcher()
+        except Exception:
+            err = traceback.format_exc()
+            _write_launch_log(err)
+            self.status.config(text="初始化失败：模型加载异常，请查看日志。")
+            messagebox.showerror("启动失败", "模型初始化失败，请查看 ~/Library/Logs/ShotSearch/launch.log")
 
     def on_load_actors(self) -> None:
+        if self.searcher is None:
+            messagebox.showerror("错误", "检索模块未初始化，请查看日志。")
+            return
         count = self.searcher.load_actor_library("data/actors")
         self.status.config(text=f"演员库已加载：{count} 位（目录结构：data/actors/演员名/*.jpg）")
         messagebox.showinfo("演员库", f"加载完成：{count} 位演员")
@@ -65,6 +86,9 @@ class App:
 
         self.status.config(text="正在分析镜头与特效标签，请稍候...")
         self.import_btn.config(state="disabled")
+        if self.indexer is None or self.searcher is None:
+            self.on_error("后端未初始化，请查看 ~/Library/Logs/ShotSearch/launch.log")
+            return
 
         def worker() -> None:
             try:
@@ -138,6 +162,15 @@ class App:
         m = (sec % 3600) // 60
         s = sec % 60
         return f"{h:02d}:{m:02d}:{s:02d}"
+
+
+def _write_launch_log(content: str) -> None:
+    try:
+        log_dir = Path.home() / "Library" / "Logs" / "ShotSearch"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / "launch.log").write_text(content, encoding="utf-8")
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

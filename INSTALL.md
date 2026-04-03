@@ -5,6 +5,17 @@
 2. 把 `ShotSearch.app` 拖入 `Applications`
 3. 首次运行若弹出安全提示：
    - 系统偏好设置 -> 安全性与隐私 -> 仍要打开
+4. 若双击无反应，请在终端执行：
+
+```bash
+open /Applications/ShotSearch.app
+```
+
+并查看日志：
+
+```bash
+cat ~/Library/Logs/ShotSearch/launch.log
+```
 
 ## B. 开发者在 Mac 上生成 DMG
 
