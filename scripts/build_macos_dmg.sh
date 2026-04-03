@@ -164,6 +164,10 @@ if [[ ! -d "$APP_BUNDLE_PATH" ]]; then
   exit 1
 fi
 
+if command -v codesign >/dev/null 2>&1; then
+  codesign --force --deep --sign - "$APP_BUNDLE_PATH" >/dev/null 2>&1 || true
+fi
+
 DMG_STAGING="$ROOT_DIR/.dmg_staging"
 rm -rf "$DMG_STAGING"
 mkdir -p "$DMG_STAGING"

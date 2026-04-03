@@ -52,8 +52,12 @@ class App:
         if self.backends_ready and self.indexer is not None and self.searcher is not None:
             return True
         try:
-            from semantic_search import SemanticSearcher
-            from shot_indexer import ShotIndexer
+            try:
+                from app.semantic_search import SemanticSearcher
+                from app.shot_indexer import ShotIndexer
+            except ModuleNotFoundError:
+                from semantic_search import SemanticSearcher
+                from shot_indexer import ShotIndexer
         except Exception:
             err = traceback.format_exc()
             _write_launch_log(err)

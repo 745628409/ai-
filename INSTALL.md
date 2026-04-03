@@ -36,6 +36,8 @@ find /Volumes -maxdepth 2 -name "ShotSearch.app"
 
 然后把上面 `cp -R` 命令中的路径替换为你机器实际输出路径。
 
+`spctl --assess ...` 显示 `rejected` 在未做 Apple Developer 公证时属于常见现象；先执行 `xattr -dr com.apple.quarantine /Applications/ShotSearch.app` 再打开即可本机使用。
+
 ## B. 开发者在 Mac 上生成 DMG
 
 在项目根目录执行：

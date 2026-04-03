@@ -7,7 +7,10 @@ import cv2
 from scenedetect import SceneManager, open_video
 from scenedetect.detectors import ContentDetector
 
-from models import ShotSegment
+try:
+    from app.models import ShotSegment
+except ModuleNotFoundError:
+    from models import ShotSegment
 
 
 class ShotIndexer:

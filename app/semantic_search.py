@@ -7,7 +7,10 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from models import SearchResult, ShotSegment
+try:
+    from app.models import SearchResult, ShotSegment
+except ModuleNotFoundError:
+    from models import SearchResult, ShotSegment
 
 
 EFFECT_CANDIDATES = [
