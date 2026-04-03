@@ -20,11 +20,21 @@ cat ~/Library/Logs/ShotSearch/launch.log
 如果 `open /Applications/ShotSearch.app` 返回 `LSOpenURLsWithRole() failed with error -10810`，请按顺序执行：
 
 ```bash
+open /你的项目路径/ShotSearch.dmg
+ls /Volumes
 rm -rf /Applications/ShotSearch.app
-cp -R /Volumes/ShotSearch\ Installer/ShotSearch.app /Applications/
+cp -R "/Volumes/ShotSearch Installer/ShotSearch.app" /Applications/
 xattr -dr com.apple.quarantine /Applications/ShotSearch.app
 open /Applications/ShotSearch.app
 ```
+
+如果你的卷名不是 `ShotSearch Installer`（例如后面带数字），先执行：
+
+```bash
+find /Volumes -maxdepth 2 -name "ShotSearch.app"
+```
+
+然后把上面 `cp -R` 命令中的路径替换为你机器实际输出路径。
 
 ## B. 开发者在 Mac 上生成 DMG
 

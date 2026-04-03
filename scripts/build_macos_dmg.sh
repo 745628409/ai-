@@ -164,6 +164,12 @@ if [[ ! -d "$APP_BUNDLE_PATH" ]]; then
   exit 1
 fi
 
+DMG_STAGING="$ROOT_DIR/.dmg_staging"
+rm -rf "$DMG_STAGING"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_BUNDLE_PATH" "$DMG_STAGING/$APP_NAME.app"
+ln -s /Applications "$DMG_STAGING/Applications"
+
 # 优先使用 create-dmg（可选），否则用 hdiutil 生成基础 dmg
 if command -v create-dmg >/dev/null 2>&1; then
   rm -f "$DMG_NAME"
@@ -175,15 +181,17 @@ if command -v create-dmg >/dev/null 2>&1; then
     --hide-extension "$APP_NAME.app" \
     --app-drop-link 580 240 \
     "$DMG_NAME" \
-    "$DIST_DIR"
+    "$DMG_STAGING"
 else
   rm -f "$DMG_NAME"
   hdiutil create \
     -volname "$APP_NAME Installer" \
-    -srcfolder "$DIST_DIR" \
+    -srcfolder "$DMG_STAGING" \
     -ov \
     -format UDZO \
     "$DMG_NAME"
 fi
+
+rm -rf "$DMG_STAGING"
 
 echo "[OK] 生成完成: $DMG_NAME"
