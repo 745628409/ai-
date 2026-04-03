@@ -49,6 +49,14 @@ if [[ ! -f "$REQ_FILE" ]]; then
   exit 1
 fi
 
+if [[ -x "$ROOT_DIR/.venv/bin/python" ]]; then
+  VENV_VER="$("$ROOT_DIR/.venv/bin/python" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")' 2>/dev/null || true)"
+  if [[ -n "$VENV_VER" && "$VENV_VER" != "$PY_VER" ]]; then
+    echo "[WARN] 检测到已有 .venv 使用 Python $VENV_VER，与当前选择 $PY_VER 不一致，正在重建 .venv..."
+    rm -rf "$ROOT_DIR/.venv"
+  fi
+fi
+
 "$PY_BIN" -m venv "$ROOT_DIR/.venv"
 source "$ROOT_DIR/.venv/bin/activate"
 python -m pip install --upgrade pip setuptools wheel
@@ -68,11 +76,12 @@ if ! install_with_binary_wheels "$REQ_FILE"; then
     cat <<'EOF'
 [ERROR] 仍未能安装二进制依赖（已避免源码编译）。
 可能原因：
-  1) 当前 Python 版本或 CPU 架构没有可用 wheel。
+  1) 当前 venv 的 Python 版本或 CPU 架构没有可用 wheel。
   2) pip 版本过旧或网络镜像缺少对应 wheel。
 
 建议：
   - 使用 Python 3.10（Intel x86_64）后重试；
+  - 删除 .venv 后重试（避免沿用旧 Python 版本）；
   - 或切换官方 PyPI 源重试；
   - 若日志出现 nasm / CMake，说明触发了源码构建，本脚本已阻止该路径。
 EOF
