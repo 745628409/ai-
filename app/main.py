@@ -46,29 +46,36 @@ class App:
         scrollbar = Scrollbar(body, command=self.result_box.yview)
         scrollbar.pack(side=RIGHT, fill="y")
         self.result_box.config(yscrollcommand=scrollbar.set)
-        self._init_backends()
+        self.backends_ready = False
 
-    def _init_backends(self) -> None:
+    def _ensure_backends(self) -> bool:
+        if self.backends_ready and self.indexer is not None and self.searcher is not None:
+            return True
         try:
             from semantic_search import SemanticSearcher
             from shot_indexer import ShotIndexer
         except Exception:
             err = traceback.format_exc()
             _write_launch_log(err)
-            self.status.config(text="初始化失败：依赖加载异常，请查看日志。")
+            self.status.config(text="依赖加载异常，请查看日志。")
             messagebox.showerror("启动失败", "依赖加载失败，请查看 ~/Library/Logs/ShotSearch/launch.log")
-            return
+            return False
 
         try:
             self.indexer = ShotIndexer()
             self.searcher = SemanticSearcher()
+            self.backends_ready = True
+            return True
         except Exception:
             err = traceback.format_exc()
             _write_launch_log(err)
-            self.status.config(text="初始化失败：模型加载异常，请查看日志。")
+            self.status.config(text="后端初始化失败，请查看日志。")
             messagebox.showerror("启动失败", "模型初始化失败，请查看 ~/Library/Logs/ShotSearch/launch.log")
+            return False
 
     def on_load_actors(self) -> None:
+        if not self._ensure_backends():
+            return
         if self.searcher is None:
             messagebox.showerror("错误", "检索模块未初始化，请查看日志。")
             return
@@ -84,11 +91,11 @@ class App:
         if not video_path:
             return
 
+        if not self._ensure_backends():
+            return
+
         self.status.config(text="正在分析镜头与特效标签，请稍候...")
         self.import_btn.config(state="disabled")
-        if self.indexer is None or self.searcher is None:
-            self.on_error("后端未初始化，请查看 ~/Library/Logs/ShotSearch/launch.log")
-            return
 
         def worker() -> None:
             try:
@@ -113,6 +120,8 @@ class App:
         messagebox.showerror("错误", error)
 
     def on_search(self) -> None:
+        if not self._ensure_backends():
+            return
         query = self.query_entry.get().strip()
         if not query:
             return

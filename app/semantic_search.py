@@ -6,7 +6,6 @@ from typing import Dict, List
 import cv2
 import numpy as np
 from PIL import Image
-from transformers import CLIPModel, CLIPProcessor
 
 from models import SearchResult, ShotSegment
 
@@ -64,6 +63,8 @@ class SemanticSearcher:
 
     def _ensure_model_loaded(self) -> None:
         if self.processor is None or self.model is None:
+            from transformers import CLIPModel, CLIPProcessor
+
             self.processor = CLIPProcessor.from_pretrained(self.model_name)
             self.model = CLIPModel.from_pretrained(self.model_name)
         if self.effect_label_embeddings is None or self.scene_label_embeddings is None or not self.event_label_embeddings:
