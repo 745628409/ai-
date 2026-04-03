@@ -119,4 +119,4 @@ powershell -ExecutionPolicy Bypass -File scripts/build_windows_exe.ps1
 将 `dist\ShotSearch` 整个目录打包给用户即可使用。
 
 
-> 如果 macOS 打包时出现 `opencv` 安装失败，`build_macos_dmg.sh` 会自动尝试 `requirements-macos-legacy.txt`，并自动轮询多个 `opencv-python` 二进制 wheel 版本（避免触发本地 CMake/nasm 源码编译）。
+> 如果 macOS 打包时出现 `opencv` 安装失败，`build_macos_dmg.sh` 会自动尝试 `requirements-macos-legacy.txt`，并自动轮询多个 `opencv-python` 二进制 wheel 版本（含 Mojave 可用的历史版本），避免触发本地 CMake/nasm 源码编译。

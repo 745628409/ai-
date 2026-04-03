@@ -59,7 +59,7 @@ scripts\build_windows_exe.bat
 ## F. macOS 下 opencv wheel 构建失败时
 
 如果出现 `Failed building wheel for opencv-python` 或日志中出现 `nasm` / `CMake`，说明 pip 正在尝试源码编译。  
-当前脚本已改为**仅安装二进制 wheel**并自动回退到 `requirements-macos-legacy.txt`（较老但更兼容的依赖组合），同时会轮询多个 `opencv-python` 版本寻找可用 wheel。
+当前脚本已改为**仅安装二进制 wheel**并自动回退到 `requirements-macos-legacy.txt`（较老但更兼容的依赖组合），同时会轮询多个 `opencv-python` 版本寻找可用 wheel（包含部分 Mojave 上唯一可用但已 yanked 的历史版本）。
 另外如果日志里显示“选中了 python3.10，但 `.venv` 仍是 python3.8”，请先删除旧虚拟环境再重试：
 
 ```bash

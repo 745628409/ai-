@@ -68,6 +68,7 @@ install_with_binary_wheels() {
 
 install_opencv_binary() {
   local -a candidates=(
+    "opencv-python==4.7.0.68"
     "opencv-python==4.6.0.66"
     "opencv-python==4.5.5.64"
     "opencv-python==4.5.3.56"
