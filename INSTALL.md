@@ -23,10 +23,13 @@ bash scripts/build_macos_dmg.sh
 
 ## C. 依赖说明
 
-- Python 3.8+
+- Python 3.8~3.11（推荐 3.10）
 - `requirements.txt`
 - 打包工具：`pyinstaller`
 
 ## D. 签名与公证（正式分发建议）
 
 如果你要给其他 Mac 用户“即装即用、无安全警告”体验，建议对 `.app` 和 `.dmg` 做 Apple Developer ID 签名与 notarization。
+
+
+> 注意：Python 3.13 目前会在部分依赖安装阶段失败（如你遇到的 `setuptools.build_meta` / 构建后端错误），请改用 3.10 或 3.11。

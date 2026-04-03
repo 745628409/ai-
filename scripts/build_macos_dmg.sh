@@ -18,14 +18,39 @@ DIST_DIR="$ROOT_DIR/dist"
 DMG_NAME="$ROOT_DIR/${APP_NAME}.dmg"
 REQ_FILE="$ROOT_DIR/requirements.txt"
 
+pick_python() {
+  for bin in python3.10 python3.11 python3.9 python3.8 python3; do
+    if command -v "$bin" >/dev/null 2>&1; then
+      echo "$bin"
+      return 0
+    fi
+  done
+  return 1
+}
+
+PY_BIN="$(pick_python || true)"
+if [[ -z "$PY_BIN" ]]; then
+  echo "[ERROR] 未找到可用 Python。请安装 Python 3.8~3.11（推荐 3.10）。"
+  exit 1
+fi
+
+PY_VER="$($PY_BIN -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+PY_MINOR="$($PY_BIN -c 'import sys; print(sys.version_info.minor)')"
+if [[ "$PY_MINOR" -lt 8 || "$PY_MINOR" -gt 11 ]]; then
+  echo "[ERROR] 当前 Python=$PY_VER，不受支持。请使用 Python 3.8~3.11（推荐 3.10）。"
+  exit 1
+fi
+
+echo "[INFO] 使用 Python: $PY_BIN ($PY_VER)"
+
 if [[ ! -f "$REQ_FILE" ]]; then
   echo "[ERROR] 未找到 requirements.txt: $REQ_FILE"
   exit 1
 fi
 
-python3 -m venv "$ROOT_DIR/.venv"
+"$PY_BIN" -m venv "$ROOT_DIR/.venv"
 source "$ROOT_DIR/.venv/bin/activate"
-python -m pip install --upgrade pip
+python -m pip install --upgrade pip setuptools wheel
 python -m pip install -r "$REQ_FILE" pyinstaller
 
 PYI_ARGS=(
