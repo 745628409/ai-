@@ -85,5 +85,5 @@ PIP_INDEX_URL=https://pypi.org/simple bash scripts/build_macos_dmg.sh
 新脚本已默认忽略系统 pip 配置；你也可以手工验证：
 
 ```bash
-PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 pip install --upgrade pip
+env -u PIP_REQUIRE_HASHES -u PIP_CONSTRAINT -u PIP_REQUIREMENT PIP_CONFIG_FILE=/dev/null pip install --upgrade pip
 ```

@@ -61,14 +61,26 @@ fi
 source "$ROOT_DIR/.venv/bin/activate"
 
 pip_safe() {
-  PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 python -m pip "$@"
+  env \
+    -u PIP_REQUIRE_HASHES \
+    -u PIP_CONSTRAINT \
+    -u PIP_REQUIREMENT \
+    -u PIP_BUILD_CONSTRAINT \
+    PIP_CONFIG_FILE=/dev/null \
+    python -m pip "$@"
 }
 
 pip_safe install --upgrade pip setuptools wheel
 
 install_with_binary_wheels() {
   local req_path="$1"
-  PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 PIP_ONLY_BINARY=:all: \
+  env \
+    -u PIP_REQUIRE_HASHES \
+    -u PIP_CONSTRAINT \
+    -u PIP_REQUIREMENT \
+    -u PIP_BUILD_CONSTRAINT \
+    PIP_CONFIG_FILE=/dev/null \
+    PIP_ONLY_BINARY=:all: \
     python -m pip install --prefer-binary -r "$req_path" pyinstaller
 }
 
@@ -82,7 +94,13 @@ install_opencv_binary() {
   )
   for pkg in "${candidates[@]}"; do
     echo "[INFO] 尝试安装 OpenCV 二进制包: $pkg"
-    if PIP_CONFIG_FILE=/dev/null PIP_REQUIRE_HASHES=0 PIP_ONLY_BINARY=:all: \
+    if env \
+      -u PIP_REQUIRE_HASHES \
+      -u PIP_CONSTRAINT \
+      -u PIP_REQUIREMENT \
+      -u PIP_BUILD_CONSTRAINT \
+      PIP_CONFIG_FILE=/dev/null \
+      PIP_ONLY_BINARY=:all: \
       python -m pip install --prefer-binary "$pkg"; then
       return 0
     fi
