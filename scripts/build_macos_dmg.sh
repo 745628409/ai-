@@ -17,6 +17,7 @@ ICON_PATH="$ROOT_DIR/packaging/AppIcon.icns"
 DIST_DIR="$ROOT_DIR/dist"
 DMG_NAME="$ROOT_DIR/${APP_NAME}.dmg"
 REQ_FILE="$ROOT_DIR/requirements.txt"
+LEGACY_REQ_FILE="$ROOT_DIR/requirements-macos-legacy.txt"
 
 pick_python() {
   for bin in python3.10 python3.11 python3.9 python3.8 python3; do
@@ -51,7 +52,15 @@ fi
 "$PY_BIN" -m venv "$ROOT_DIR/.venv"
 source "$ROOT_DIR/.venv/bin/activate"
 python -m pip install --upgrade pip setuptools wheel
-python -m pip install -r "$REQ_FILE" pyinstaller
+
+if ! python -m pip install -r "$REQ_FILE" pyinstaller; then
+  echo "[WARN] 主依赖安装失败，尝试 macOS 兼容降级依赖..."
+  if [[ ! -f "$LEGACY_REQ_FILE" ]]; then
+    echo "[ERROR] 未找到降级依赖文件: $LEGACY_REQ_FILE"
+    exit 1
+  fi
+  python -m pip install -r "$LEGACY_REQ_FILE" pyinstaller
+fi
 
 PYI_ARGS=(
   --name "$APP_NAME"

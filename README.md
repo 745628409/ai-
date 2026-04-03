@@ -117,3 +117,6 @@ powershell -ExecutionPolicy Bypass -File scripts/build_windows_exe.ps1
 - `dist\ShotSearch\ShotSearch.exe`
 
 将 `dist\ShotSearch` 整个目录打包给用户即可使用。
+
+
+> 如果 macOS 打包时出现 `opencv-python` 编译失败，`build_macos_dmg.sh` 会自动尝试 `requirements-macos-legacy.txt`。

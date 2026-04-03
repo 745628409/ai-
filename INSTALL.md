@@ -54,3 +54,15 @@ scripts\build_windows_exe.bat
 - `dist\ShotSearch\ShotSearch.exe`
 
 把 `dist\ShotSearch` 整个目录打包成 zip 发给用户，解压后双击 `ShotSearch.exe` 即可运行（无需安装 Python）。
+
+
+## F. macOS 下 opencv-python wheel 构建失败时
+
+如果出现 `Failed building wheel for opencv-python`，脚本会自动回退到 `requirements-macos-legacy.txt`（较老但更兼容的 OpenCV 版本）。
+
+你也可以手工执行：
+
+```bash
+source .venv/bin/activate
+pip install -r requirements-macos-legacy.txt pyinstaller
+```
