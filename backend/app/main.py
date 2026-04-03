@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.schemas import (
+from .models.schemas import (
     AnalysisRequest,
     ApiResponse,
     CharacterCard,
@@ -16,9 +16,9 @@ from app.models.schemas import (
     TextToImageRequest,
     TextToVideoRequest,
 )
-from app.services.model_service import ModelService
-from app.services.story_parser import analyze_story, build_enhanced_prompt
-from app.services.storage_service import add_history, list_characters, list_history, save_character
+from .services.model_service import ModelService
+from .services.story_parser import analyze_story, build_enhanced_prompt
+from .services.storage_service import add_history, list_characters, list_history, save_character
 
 app = FastAPI(title="Novel2Screen API", version="0.1.0")
 model_service = ModelService()
