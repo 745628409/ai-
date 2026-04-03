@@ -7,24 +7,36 @@ if [[ "$(uname -s)" != "Darwin" ]]; then
   exit 1
 fi
 
-APP_NAME="ShotSearch"
-ENTRY="app/main.py"
-ICON_PATH="packaging/AppIcon.icns"
-DIST_DIR="dist"
-BUILD_DIR="build"
-DMG_NAME="${APP_NAME}.dmg"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$ROOT_DIR"
 
-python3 -m venv .venv
-source .venv/bin/activate
+APP_NAME="ShotSearch"
+ENTRY="$ROOT_DIR/app/main.py"
+ICON_PATH="$ROOT_DIR/packaging/AppIcon.icns"
+DIST_DIR="$ROOT_DIR/dist"
+DMG_NAME="$ROOT_DIR/${APP_NAME}.dmg"
+REQ_FILE="$ROOT_DIR/requirements.txt"
+
+if [[ ! -f "$REQ_FILE" ]]; then
+  echo "[ERROR] 未找到 requirements.txt: $REQ_FILE"
+  exit 1
+fi
+
+python3 -m venv "$ROOT_DIR/.venv"
+source "$ROOT_DIR/.venv/bin/activate"
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt pyinstaller
+python -m pip install -r "$REQ_FILE" pyinstaller
 
 PYI_ARGS=(
   --name "$APP_NAME"
   --windowed
   --noconfirm
   --clean
-  --add-data "app:app"
+  --add-data "$ROOT_DIR/app:app"
+  --distpath "$DIST_DIR"
+  --workpath "$ROOT_DIR/build"
+  --specpath "$ROOT_DIR"
 )
 
 if [[ -f "$ICON_PATH" ]]; then
@@ -61,4 +73,4 @@ else
     "$DMG_NAME"
 fi
 
-echo "[OK] 生成完成: $(pwd)/$DMG_NAME"
+echo "[OK] 生成完成: $DMG_NAME"
