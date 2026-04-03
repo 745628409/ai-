@@ -33,3 +33,24 @@ bash scripts/build_macos_dmg.sh
 
 
 > 注意：Python 3.13 目前会在部分依赖安装阶段失败（如你遇到的 `setuptools.build_meta` / 构建后端错误），请改用 3.10 或 3.11。
+
+
+## E. Windows 10 打包与运行
+
+在 Windows PowerShell 中执行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_windows_exe.ps1
+```
+
+或者双击/命令行执行：
+
+```bat
+scripts\build_windows_exe.bat
+```
+
+输出目录：
+
+- `dist\ShotSearch\ShotSearch.exe`
+
+把 `dist\ShotSearch` 整个目录打包成 zip 发给用户，解压后双击 `ShotSearch.exe` 即可运行（无需安装 Python）。

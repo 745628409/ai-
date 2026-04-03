@@ -102,3 +102,18 @@ bash scripts/build_macos_dmg.sh
 安装时双击 `ShotSearch.dmg`，把 `ShotSearch.app` 拖进 `Applications` 即可。
 
 详细步骤见：`INSTALL.md`。
+
+
+## 8. Windows 10 版本（可打包）
+
+已提供 Windows 打包脚本：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/build_windows_exe.ps1
+```
+
+生成：
+
+- `dist\ShotSearch\ShotSearch.exe`
+
+将 `dist\ShotSearch` 整个目录打包给用户即可使用。
