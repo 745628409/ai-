@@ -53,13 +53,31 @@ fi
 source "$ROOT_DIR/.venv/bin/activate"
 python -m pip install --upgrade pip setuptools wheel
 
-if ! python -m pip install -r "$REQ_FILE" pyinstaller; then
+install_with_binary_wheels() {
+  local req_path="$1"
+  PIP_ONLY_BINARY=:all: python -m pip install --prefer-binary -r "$req_path" pyinstaller
+}
+
+if ! install_with_binary_wheels "$REQ_FILE"; then
   echo "[WARN] 主依赖安装失败，尝试 macOS 兼容降级依赖..."
   if [[ ! -f "$LEGACY_REQ_FILE" ]]; then
     echo "[ERROR] 未找到降级依赖文件: $LEGACY_REQ_FILE"
     exit 1
   fi
-  python -m pip install -r "$LEGACY_REQ_FILE" pyinstaller
+  if ! install_with_binary_wheels "$LEGACY_REQ_FILE"; then
+    cat <<'EOF'
+[ERROR] 仍未能安装二进制依赖（已避免源码编译）。
+可能原因：
+  1) 当前 Python 版本或 CPU 架构没有可用 wheel。
+  2) pip 版本过旧或网络镜像缺少对应 wheel。
+
+建议：
+  - 使用 Python 3.10（Intel x86_64）后重试；
+  - 或切换官方 PyPI 源重试；
+  - 若日志出现 nasm / CMake，说明触发了源码构建，本脚本已阻止该路径。
+EOF
+    exit 1
+  fi
 fi
 
 PYI_ARGS=(
