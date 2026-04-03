@@ -87,3 +87,10 @@ PIP_INDEX_URL=https://pypi.org/simple bash scripts/build_macos_dmg.sh
 ```bash
 env -u PIP_REQUIRE_HASHES -u PIP_CONSTRAINT -u PIP_REQUIREMENT PIP_CONFIG_FILE=/dev/null pip install --upgrade pip
 ```
+
+如果仍报同样 hash 错误，再清理缓存并禁用缓存安装：
+
+```bash
+pip cache purge
+PIP_INDEX_URL=https://pypi.org/simple bash scripts/build_macos_dmg.sh
+```

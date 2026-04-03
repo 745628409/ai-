@@ -70,7 +70,8 @@ pip_safe() {
     python -m pip "$@"
 }
 
-pip_safe install --upgrade pip setuptools wheel
+pip_safe cache purge >/dev/null 2>&1 || true
+pip_safe install --no-cache-dir --upgrade pip setuptools wheel
 
 install_with_binary_wheels() {
   local req_path="$1"
@@ -81,7 +82,7 @@ install_with_binary_wheels() {
     -u PIP_BUILD_CONSTRAINT \
     PIP_CONFIG_FILE=/dev/null \
     PIP_ONLY_BINARY=:all: \
-    python -m pip install --prefer-binary -r "$req_path" pyinstaller
+    python -m pip install --no-cache-dir --prefer-binary -r "$req_path" pyinstaller
 }
 
 install_opencv_binary() {
@@ -101,7 +102,7 @@ install_opencv_binary() {
       -u PIP_BUILD_CONSTRAINT \
       PIP_CONFIG_FILE=/dev/null \
       PIP_ONLY_BINARY=:all: \
-      python -m pip install --prefer-binary "$pkg"; then
+      python -m pip install --no-cache-dir --prefer-binary "$pkg"; then
       return 0
     fi
   done
@@ -127,6 +128,7 @@ if ! install_stack "$REQ_FILE"; then
   2) pip 版本过旧或网络镜像缺少对应 wheel。
   3) 当前镜像源缺少 macOS 对应的 opencv-python wheel。
   4) 系统 pip 配置启用了 hash 校验或私有约束，导致第三方包被拒绝。
+  5) 下载缓存或网络代理返回了与索引哈希不一致的包内容。
 
 建议：
   - 使用 Python 3.10（Intel x86_64）后重试；
